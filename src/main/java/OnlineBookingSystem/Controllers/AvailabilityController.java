@@ -100,7 +100,7 @@ public class AvailabilityController {
     static boolean checkIsAvailable(int employeeId, LocalDate date, LocalTime startTime, int duration){
 
         OBSFascade obs = OBSModel.getModel();
-        LocalDate lowerBound = LocalDate.now().with(DayOfWeek.MONDAY);
+        LocalDate lowerBound = LocalDate.now();
         if(date.isBefore(lowerBound)){
             return false;
         }
@@ -108,6 +108,11 @@ public class AvailabilityController {
         LocalTime endTime = startTime.plusMinutes(duration);
         LocalDateTime startDateTime = LocalDateTime.of(date, startTime);
         LocalDateTime endDateTime = LocalDateTime.of(date, endTime);
+
+        // The start time should be later than now, otherwise it's not even a booking anymore.
+        if(!startDateTime.isAfter(LocalDateTime.now())) {
+            return false;
+        }
 
         ArrayList<Booking> otherBookings = obs.getBookingsForEmployee(employeeId);
         ArrayList<Work> rosteredShifts = obs.getAllWorkForEmployee(employeeId);
@@ -251,7 +256,7 @@ public class AvailabilityController {
             TableCell cell = new TableCell();
             //Set up the date object so we know which day we are referring to.
             LocalDate currentDay = day.getDate();
-            cell.text = day.getName() + currentDay.format(DateTimeFormatter.ofPattern("dd/MM/YYYY"));
+            cell.text = day.getName() + " " + currentDay.format(DateTimeFormatter.ofPattern("dd/MM/YYYY"));
             headers.add(cell);
         }
         mav.addObject("tableHeader", headers);
