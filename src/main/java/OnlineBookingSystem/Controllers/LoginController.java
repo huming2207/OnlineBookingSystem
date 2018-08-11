@@ -54,8 +54,8 @@ public class LoginController {
             @RequestParam String password
     ){
         //Check
-        Customer cust = obs.getCustomerByUsername(password);
-        BusinessOwner bo = obs.getBusinessOwnerByUsername(password);
+        Customer cust = obs.getCustomerByUsername(username);
+        BusinessOwner bo = obs.getBusinessOwnerByUsername(username);
         if(cust != null){
             //Handle Customer login
             if(!password.equals(cust.getPassword())){
