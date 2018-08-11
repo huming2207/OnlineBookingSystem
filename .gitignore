@@ -223,5 +223,6 @@ build/
 nbbuild/
 dist/
 nbdist/
-.nb-gradle/
-
+/*.png
+/obs.db
+/*.css
