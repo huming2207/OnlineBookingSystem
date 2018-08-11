@@ -4,6 +4,7 @@ import OnlineBookingSystem.DisplayClasses.TableCell;
 import OnlineBookingSystem.DisplayClasses.TableRow;
 import OnlineBookingSystem.ModelClasses.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -180,6 +181,13 @@ public class EmployeeController {
         //Check that address is alpha numeral only
         if(!address.matches("^[a-zA-Z0-9, ]+$")){
             mav.addObject("Error", "Address must contain only letters, numbers and spaces.");
+            return mav;
+        }
+
+        // Employee name must be unique
+        if(obs.getEmployeeIdByName(name) != -1) {
+            mav.addObject("Error", "Employee has already added!");
+            mav.setStatus(HttpStatus.BAD_REQUEST);
             return mav;
         }
 
