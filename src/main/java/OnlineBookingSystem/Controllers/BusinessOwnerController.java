@@ -2,14 +2,12 @@ package OnlineBookingSystem.Controllers;
 
 import OnlineBookingSystem.DisplayClasses.*;
 import OnlineBookingSystem.ModelClasses.*;
-import com.sun.org.apache.xpath.internal.operations.Mod;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -44,10 +42,18 @@ public class BusinessOwnerController {
             session.invalidate();
             return new ModelAndView("redirect:/");
         }
+
         //If the user is authenticated, then create new service object and save to the database
-        BusinessService newService = new BusinessService(user.getId(), serviceName, 1, duration);
-        BusinessService.saveService(newService);
-        return new ModelAndView("redirect:/businessowner/service");
+        // Duration must be longer than 0 minute
+        ModelAndView modelAndView = new ModelAndView("redirect:/businessowner/service");
+        if(duration <= 0) {
+            modelAndView.setStatus(HttpStatus.BAD_REQUEST);
+            return modelAndView;
+        } else {
+            BusinessService newService = new BusinessService(user.getId(), serviceName, 1, duration);
+            BusinessService.saveService(newService);
+            return modelAndView;
+        }
     }
 
     @RequestMapping(path="/service/add", method=RequestMethod.GET)
