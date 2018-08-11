@@ -59,7 +59,7 @@ public class LoginController {
         if(cust != null){
             //Handle Customer login
             if(!password.equals(cust.getPassword())){
-                return incorretPassword();
+                return incorrectPassword();
             }
 
             //Successfully authenticated as Customer
@@ -73,7 +73,7 @@ public class LoginController {
         //Check for Business Partner and Handle it
         else if(bo != null){
             if(!password.equals(bo.getPassword())){
-                return incorretPassword();
+                return incorrectPassword();
             }
             //Successfully authenticated as Customer
             //Set session attribute
@@ -83,11 +83,11 @@ public class LoginController {
         }
         else{
             //Must be incorrect username
-            return incorretPassword();
+            return incorrectPassword();
         }
     }
 
-    private ModelAndView incorretPassword(){
+    private ModelAndView incorrectPassword(){
         ModelAndView mav = new ModelAndView("login");
         mav.addObject("Error", "Incorrect username or password");
         return mav;
