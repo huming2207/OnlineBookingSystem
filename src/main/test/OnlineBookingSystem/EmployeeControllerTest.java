@@ -35,7 +35,7 @@ public class EmployeeControllerTest
         // https://stackoverflow.com/questions/26142631/why-does-spring-mockmvc-result-not-contain-a-cookie/26281932#26281932
         mockMvc.perform(MockMvcRequestBuilders
                 .post("/")
-                .param("username", "customer123")
+                .param("username", "whatever")
                 .param("password", "1234567890"))
                 .andExpect(status().is3xxRedirection())
                 .andDo(mvcResult -> this.httpSession = (MockHttpSession) mvcResult.getRequest().getSession());
@@ -46,7 +46,7 @@ public class EmployeeControllerTest
     {
         mockMvc.perform(MockMvcRequestBuilders.post("/businessowner/employee/add")
                 .session(this.httpSession)
-                .param("name",  UUID.randomUUID().toString().substring(0, 8))
+                .param("name",  "SuchDurian")
                 .param("email", UUID.randomUUID().toString().substring(0, 8) + "@whatever.com")
                 .param("phone", "0400000000")
                 .param("address", "1024 Durian Rd, Melbourne, VIC 3000")
@@ -57,7 +57,7 @@ public class EmployeeControllerTest
     @Test
     public void addInvalidEmployeeWithDuplicatedName() throws Exception
     {
-        String employeeName = UUID.randomUUID().toString().substring(0, 8);
+        String employeeName = "DuplicatedFireAlarm";
 
         // The first pass
         mockMvc.perform(MockMvcRequestBuilders.post("/businessowner/employee/add")
@@ -86,7 +86,7 @@ public class EmployeeControllerTest
         mockMvc.perform(MockMvcRequestBuilders.post("/businessowner/employee/add")
                 .session(this.httpSession)
                 .param("name",  "")
-                .param("email", UUID.randomUUID().toString().substring(0, 8) + "@whatever.com")
+                .param("email", "durian@whatever.com")
                 .param("phone", "0400000000")
                 .param("address", "1024 Durian Rd, Melbourne, VIC 3000")
                 .param("service", "1"))
@@ -98,7 +98,7 @@ public class EmployeeControllerTest
     {
         mockMvc.perform(MockMvcRequestBuilders.post("/businessowner/employee/add")
                 .session(this.httpSession)
-                .param("name",  UUID.randomUUID().toString().substring(0, 8))
+                .param("name",  "WowDurian")
                 .param("email", UUID.randomUUID().toString().substring(0, 8) + "@whatever.com")
                 .param("phone", "+8613800138000")
                 .param("address", "1024 Durian Rd, Melbourne, VIC 3000")

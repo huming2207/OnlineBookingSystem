@@ -11,9 +11,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 import static org.hamcrest.Matchers.containsString;
@@ -51,15 +51,14 @@ public class BookingControllerTest
         mockMvc.perform(MockMvcRequestBuilders
                 .post(String.format("/booking/cuaddbooking/1/%s/10:30/1/1", dateString))
                 .session(this.httpSession))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(content().string(containsString("Booking Added")));
+                .andExpect(status().is3xxRedirection());
     }
 
     @Test
     public void addPastInvalidBooking() throws Exception
     {
         mockMvc.perform(MockMvcRequestBuilders
-                .post("/booking/cuaddbooking/1/2000-1-1/10:30/1/1")
+                .post("/booking/cuaddbooking/1/2000-01-01/10:30/1/1")
                 .session(this.httpSession))
                 .andExpect(status().is2xxSuccessful())
                 .andExpect(content().string(containsString(
@@ -73,12 +72,12 @@ public class BookingControllerTest
         mockMvc.perform(MockMvcRequestBuilders
                 .get("/booking/cuaddbooking/1/null-lol-1/null:hahaha/1/1")
                 .session(this.httpSession))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isInternalServerError());
 
         mockMvc.perform(MockMvcRequestBuilders
                 .post("/booking/cuaddbooking/1/null-lol-1/null:hahaha/1/1")
                 .session(this.httpSession))
-                .andExpect(status().is5xxServerError());
+                .andExpect(status().isInternalServerError());
     }
 
     @Test
@@ -96,13 +95,13 @@ public class BookingControllerTest
 
     private String getDateString(LocalDate date)
     {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        DateTimeFormatter simpleDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         return simpleDateFormat.format(date);
     }
 
     private String getTimeString(LocalTime time)
     {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
+        DateTimeFormatter simpleDateFormat = DateTimeFormatter.ofPattern("HH:mm");
         return simpleDateFormat.format(time);
     }
 }
