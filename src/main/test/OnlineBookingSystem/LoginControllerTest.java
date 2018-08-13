@@ -5,6 +5,8 @@ import OnlineBookingSystem.ModelClasses.OBSFascade;
 import OnlineBookingSystem.ModelClasses.OBSModel;
 import OnlineBookingSystem.ModelClasses.Role;
 import OnlineBookingSystem.ModelClasses.User;
+import com.inflectra.spiratest.addons.junitextension.SpiraTestCase;
+import com.inflectra.spiratest.addons.junitextension.SpiraTestConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +19,14 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpSession;
 
+@SpiraTestConfiguration(
+        //following are REQUIRED
+        url = "https://rmit-university.spiraservice.net",
+        login = "s3554025",
+        rssToken = "{884CCF22-E045-4D61-AE3A-7414D20BAB8B}",
+        projectId = 222
+)
+
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 public class LoginControllerTest
@@ -25,6 +35,7 @@ public class LoginControllerTest
     private LoginController loginController;
 
     @Test
+    @SpiraTestCase(testCaseId = 2248)
     public void performValidAdminLoginTest()
     {
         ModelAndView modelAndView = loginController.login("whatever", "1234567890");
@@ -43,6 +54,7 @@ public class LoginControllerTest
     }
 
     @Test
+    @SpiraTestCase(testCaseId = 2249)
     public void performValidCustomerLoginTest()
     {
         // Do a admin login
@@ -62,6 +74,7 @@ public class LoginControllerTest
     }
 
     @Test
+    @SpiraTestCase(testCaseId = 2251)
     public void performInvalidAdminLoginTest()
     {
         // Do a invalid admin login
@@ -81,6 +94,7 @@ public class LoginControllerTest
     }
 
     @Test
+    @SpiraTestCase(testCaseId = 2250)
     public void performInvalidCustomerLoginTest() throws Exception
     {
         // Do a invalid admin login

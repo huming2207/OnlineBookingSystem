@@ -45,6 +45,15 @@
             <artifactId>sqlite-jdbc</artifactId>
             <version>3.16.1</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.inflectra.spiratest.addons</groupId>
+            <artifactId>junitextension</artifactId>
+            <version>4.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/spira.jar</systemPath>
+        </dependency>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
