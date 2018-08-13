@@ -1,107 +1,127 @@
 package OnlineBookingSystem;
 
+import OnlineBookingSystem.Controllers.BookingController;
+import OnlineBookingSystem.ModelClasses.OBSFascade;
+import OnlineBookingSystem.ModelClasses.OBSModel;
+import OnlineBookingSystem.ModelClasses.Role;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 
+import javax.servlet.http.HttpSession;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
-
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@AutoConfigureMockMvc
 public class BookingControllerTest
 {
-    @Autowired
-    private MockMvc mockMvc;
-
-    private MockHttpSession httpSession;
+    private HttpSession httpSession;
 
     @BeforeEach
-    public void prepareLoginSession() throws Exception
+    public void prepareLoginSession()
     {
-        // A similar example of holding session:
-        // https://stackoverflow.com/questions/13687055/spring-mvc-3-1-integration-tests-with-session-support
-        // https://stackoverflow.com/questions/26142631/why-does-spring-mockmvc-result-not-contain-a-cookie/26281932#26281932
-        mockMvc.perform(MockMvcRequestBuilders
-                .post("/")
-                .param("username", "customer123")
-                .param("password", "1234567890"))
-                .andExpect(status().is3xxRedirection())
-                .andDo(mvcResult -> this.httpSession = (MockHttpSession) mvcResult.getRequest().getSession());
+        // Prepare database API
+        OBSFascade obs = OBSModel.getModel();
+
+        // Prepare a fake session, make some fake news
+        this.httpSession = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
+                .getRequest().getSession();
+
+        httpSession.setAttribute("id", obs.getCustomerByUsername("customer123").getId());
+        httpSession.setAttribute("role", Role.Customer);
     }
 
     @Test
-    public void addBooking() throws Exception
+    public void addBooking()
     {
+        BookingController bookingController = new BookingController(this.httpSession);
         String dateString = this.getDateString(LocalDate.now().plus(2, ChronoUnit.DAYS));
-        mockMvc.perform(MockMvcRequestBuilders
-                .post(String.format("/booking/cuaddbooking/1/%s/10:30/1/1", dateString))
-                .session(this.httpSession))
-                .andExpect(status().is3xxRedirection());
+
+        ModelAndView modelAndView = bookingController.customerAddBookingUpdate(
+                                    1,
+                                    dateString,
+                                    "10:30",
+                                    1,
+                                    1, new RedirectAttributesModelMap());
+
+        Assertions.assertNotNull(modelAndView.getViewName());
+        Assertions.assertEquals("redirect:/customer/dashboard", modelAndView.getViewName());
+        Assertions.assertNotNull(modelAndView.getStatus());
+        Assertions.assertTrue(
+                modelAndView.getStatus().is2xxSuccessful() || modelAndView.getStatus().is3xxRedirection());
     }
 
     @Test
     public void addPastInvalidBooking() throws Exception
     {
-        mockMvc.perform(MockMvcRequestBuilders
-                .post("/booking/cuaddbooking/1/2000-01-01/10:30/1/1")
-                .session(this.httpSession))
-                .andExpect(status().is2xxSuccessful())
-                .andExpect(content().string(containsString(
-                        "The Service, Employee combination you have selected is no longer available, " +
-                                "please return to your dashboard and try selecting a different slot.")));
+        BookingController bookingController = new BookingController(this.httpSession);
+        ModelAndView modelAndView = bookingController.customerAddBookingUpdate(
+                1,
+                "2000-01-01",
+                "10:30",
+                1,
+                1, new RedirectAttributesModelMap());
+
+        Assertions.assertNotNull(modelAndView.getModel());
+        Assertions.assertTrue(modelAndView.getModel().containsKey("Error"));
+        Assertions.assertEquals(modelAndView.getModel().get("Error"),
+                "The Service, Employee combination you " +
+                "have selected is no longer available, please return to your " +
+                "dashboard and try selecting a different slot.");
     }
 
     @Test
     public void addWrongFormattedBooking() throws Exception
     {
-        mockMvc.perform(MockMvcRequestBuilders
-                .get("/booking/cuaddbooking/1/null-lol-1/null:hahaha/1/1")
-                .session(this.httpSession))
-                .andExpect(status().isInternalServerError());
+        BookingController bookingController = new BookingController(this.httpSession);
 
-        mockMvc.perform(MockMvcRequestBuilders
-                .post("/booking/cuaddbooking/1/null-lol-1/null:hahaha/1/1")
-                .session(this.httpSession))
-                .andExpect(status().isInternalServerError());
+        Assertions.assertThrows(DateTimeParseException.class, () -> {
+            ModelAndView modelAndView = bookingController.customerAddBookingUpdate(
+                    1,
+                    "not-a-date-string",
+                    "not-a-time-string",
+                    1,
+                    1, new RedirectAttributesModelMap());
+
+            Assertions.assertNotNull(modelAndView.getStatus());
+            Assertions.assertTrue(modelAndView.getStatus().is5xxServerError());
+        });
     }
 
     @Test
     public void addClosedInvalidBooking() throws Exception
     {
+        BookingController bookingController = new BookingController(this.httpSession);
         String dateString = this.getDateString(LocalDate.now().plus(2, ChronoUnit.DAYS));
-        mockMvc.perform(MockMvcRequestBuilders
-                .post(String.format("/booking/cuaddbooking/1/%s/00:30/1/1", dateString))
-                .session(this.httpSession))
-                .andExpect(status().is2xxSuccessful())
-                .andExpect(content().string(containsString(
-                        "The Service, Employee combination you have selected is no longer available, " +
-                                "please return to your dashboard and try selecting a different slot.")));
+
+        ModelAndView modelAndView = bookingController.customerAddBookingUpdate(
+                1,
+                dateString,
+                "00:30",
+                1,
+                1, new RedirectAttributesModelMap());
+
+        Assertions.assertNotNull(modelAndView.getModel());
+        Assertions.assertTrue(modelAndView.getModel().containsKey("Error"));
+        Assertions.assertEquals(modelAndView.getModel().get("Error"),
+                "The Service, Employee combination you " +
+                        "have selected is no longer available, please return to your " +
+                        "dashboard and try selecting a different slot.");
     }
 
     private String getDateString(LocalDate date)
     {
         DateTimeFormatter simpleDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         return simpleDateFormat.format(date);
-    }
-
-    private String getTimeString(LocalTime time)
-    {
-        DateTimeFormatter simpleDateFormat = DateTimeFormatter.ofPattern("HH:mm");
-        return simpleDateFormat.format(time);
     }
 }

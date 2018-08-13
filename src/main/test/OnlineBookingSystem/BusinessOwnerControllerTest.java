@@ -1,84 +1,79 @@
 package OnlineBookingSystem;
 
+import OnlineBookingSystem.Controllers.BusinessOwnerController;
+import OnlineBookingSystem.ModelClasses.OBSFascade;
+import OnlineBookingSystem.ModelClasses.OBSModel;
+import OnlineBookingSystem.ModelClasses.Role;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import javax.servlet.http.HttpSession;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
-@AutoConfigureMockMvc
 public class BusinessOwnerControllerTest
 {
-    @Autowired
-    private MockMvc mockMvc;
-
-    private MockHttpSession httpSession;
+    private HttpSession httpSession;
 
     @BeforeEach
-    public void prepareLoginSession() throws Exception
+    public void prepareLoginSession()
     {
-        // A similar example of holding session:
-        // https://stackoverflow.com/questions/13687055/spring-mvc-3-1-integration-tests-with-session-support
-        // https://stackoverflow.com/questions/26142631/why-does-spring-mockmvc-result-not-contain-a-cookie/26281932#26281932
-        mockMvc.perform(MockMvcRequestBuilders
-                .post("/")
-                .param("username", "whatever")
-                .param("password", "1234567890"))
-                .andExpect(status().is3xxRedirection())
-                .andDo(mvcResult -> this.httpSession = (MockHttpSession) mvcResult.getRequest().getSession());
+        // Prepare database API
+        OBSFascade obs = OBSModel.getModel();
+
+        // Prepare a fake session, make some fake news
+        this.httpSession = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
+                .getRequest().getSession();
+
+        httpSession.setAttribute("id", obs.getBusinessOwnerByUsername("whatever").getId());
+        httpSession.setAttribute("role", Role.BusinessOwner);
     }
 
     @Test
-    public void addValidSerivce() throws Exception
+    public void addValidSerivce()
     {
-        mockMvc.perform(MockMvcRequestBuilders
-                .post("/businessowner/service/add")
-                .param("serviceName", "FireAlarm-as-a-Service")
-                .param("duration", "30"))
-                .andExpect(status().is3xxRedirection());
+        BusinessOwnerController businessOwnerController = new BusinessOwnerController(this.httpSession);
+        ModelAndView modelAndView = businessOwnerController.createNewService(
+                "FireAlarm-as-a-Service", 30);
+
+        Assertions.assertEquals("redirect:/businessowner/service", modelAndView.getViewName());
     }
 
     @Test
-    public void addInvalidServiceWithZeroDuration() throws Exception
+    public void addInvalidServiceWithZeroDuration()
     {
-        mockMvc.perform(MockMvcRequestBuilders
-                .post("/businessowner/service/add")
-                .param("serviceName", "FireAlarm-as-a-Service")
-                .param("duration", "0"))
-                .andExpect(status().is4xxClientError())
-                .andExpect(content().string(containsString("Duration should be longer than 0 minute!")));
+        BusinessOwnerController businessOwnerController = new BusinessOwnerController(this.httpSession);
+        ModelAndView modelAndView = businessOwnerController.createNewService(
+                "FireAlarm-as-a-Service", 0);
+
+        Assertions.assertEquals(modelAndView.getModel().get("Error"),
+                "Duration should be longer than 0 minute!");
     }
 
     @Test
-    public void addInvalidServiceWithEmptyName() throws Exception
+    public void addInvalidServiceWithEmptyName()
     {
-        mockMvc.perform(MockMvcRequestBuilders
-                .post("/businessowner/service/add")
-                .param("serviceName", "")
-                .param("duration", "30"))
-                .andExpect(status().is4xxClientError())
-                .andExpect(content().string(containsString("Service name cannot be empty!")));
+        BusinessOwnerController businessOwnerController = new BusinessOwnerController(this.httpSession);
+        ModelAndView modelAndView = businessOwnerController.createNewService("", 30);
+
+        Assertions.assertEquals(modelAndView.getModel().get("Error"), "Service name cannot be empty!");
     }
 
     @Test
-    public void cancelService() throws Exception
+    public void cancelService()
     {
-        // This test MUST FAIL for some reasons I don't know
-        mockMvc.perform(MockMvcRequestBuilders
-                .post("/businessowner/service/add")
-                .param("serviceName", "")
-                .param("duration", "30"))
-                .andExpect(status().is2xxSuccessful());
+        // This test won't pass for some reasons I don't know
+        BusinessOwnerController businessOwnerController = new BusinessOwnerController(this.httpSession);
+        ModelAndView modelAndView = businessOwnerController.cancelService(1, new RedirectAttributesModelMap());
+
+        Assertions.assertEquals("redirect:/businessowner/service", modelAndView.getViewName());
     }
 }

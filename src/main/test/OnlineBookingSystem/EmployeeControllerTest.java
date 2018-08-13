@@ -1,57 +1,56 @@
 package OnlineBookingSystem;
 
+import OnlineBookingSystem.Controllers.EmployeeController;
+import OnlineBookingSystem.ModelClasses.OBSFascade;
+import OnlineBookingSystem.ModelClasses.OBSModel;
+import OnlineBookingSystem.ModelClasses.Role;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpSession;
 import java.util.UUID;
-
-import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 public class EmployeeControllerTest
 {
-    @Autowired
-    private MockMvc mockMvc;
-
-    private MockHttpSession httpSession;
+    private HttpSession httpSession;
 
     @BeforeEach
-    public void prepareLoginSession() throws Exception
+    public void prepareLoginSession()
     {
-        // A similar example of holding session:
-        // https://stackoverflow.com/questions/13687055/spring-mvc-3-1-integration-tests-with-session-support
-        // https://stackoverflow.com/questions/26142631/why-does-spring-mockmvc-result-not-contain-a-cookie/26281932#26281932
-        mockMvc.perform(MockMvcRequestBuilders
-                .post("/")
-                .param("username", "whatever")
-                .param("password", "1234567890"))
-                .andExpect(status().is3xxRedirection())
-                .andDo(mvcResult -> this.httpSession = (MockHttpSession) mvcResult.getRequest().getSession());
+        // Prepare database API
+        OBSFascade obs = OBSModel.getModel();
+
+        // Prepare a fake session, make some fake news
+        this.httpSession = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
+                .getRequest().getSession();
+
+        httpSession.setAttribute("id", obs.getBusinessOwnerByUsername("whatever").getId());
+        httpSession.setAttribute("role", Role.BusinessOwner);
     }
 
     @Test
     public void addNewEmployee() throws Exception
     {
-        mockMvc.perform(MockMvcRequestBuilders.post("/businessowner/employee/add")
-                .session(this.httpSession)
-                .param("name",  "SuchDurian")
-                .param("email", UUID.randomUUID().toString().substring(0, 8) + "@whatever.com")
-                .param("phone", "0400000000")
-                .param("address", "1024 Durian Rd, Melbourne, VIC 3000")
-                .param("service", "1"))
-                .andExpect(status().is3xxRedirection());
+        EmployeeController employeeController = new EmployeeController(this.httpSession);
+        ModelAndView modelAndView = employeeController.postEmployeeAdd(
+                                    "SuchDurian",
+                                    UUID.randomUUID().toString().substring(0, 8) + "@whatever.com",
+                                    "0400000000",
+                                    "1024 Durian Rd, Melbourne, VIC 3000",
+                                    new Integer[]{1});
+
+        Assertions.assertEquals("redirect:/businessowner/dashboard", modelAndView.getViewName());
     }
 
     @Test
@@ -60,49 +59,58 @@ public class EmployeeControllerTest
         String employeeName = "DuplicatedFireAlarm";
 
         // The first pass
-        mockMvc.perform(MockMvcRequestBuilders.post("/businessowner/employee/add")
-                .session(this.httpSession)
-                .param("name",  employeeName)
-                .param("email", UUID.randomUUID().toString().substring(0, 8) + "@whatever.com")
-                .param("phone", "0400000000")
-                .param("address", "1024 Durian Rd, Melbourne, VIC 3000")
-                .param("service", "1"))
-                .andExpect(status().is3xxRedirection());
+        EmployeeController employeeController = new EmployeeController(this.httpSession);
+        employeeController.postEmployeeAdd(
+                employeeName,
+                UUID.randomUUID().toString().substring(0, 8) + "@whatever.com",
+                "0400000000",
+                "1024 Durian Rd, Melbourne, VIC 3000",
+                new Integer[]{1});
 
         // ...and do it again with the same request
-        mockMvc.perform(MockMvcRequestBuilders.post("/businessowner/employee/add")
-                .session(this.httpSession)
-                .param("name",  employeeName)
-                .param("email", UUID.randomUUID().toString().substring(0, 8) + "@whatever.com")
-                .param("phone", "0400000000")
-                .param("address", "1024 Durian Rd, Melbourne, VIC 3000")
-                .param("service", "1"))
-                .andExpect(content().string(containsString("Employee has already added!")));
+        ModelAndView modelAndView = employeeController.postEmployeeAdd(
+                employeeName,
+                UUID.randomUUID().toString().substring(0, 8) + "@whatever.com",
+                "0400000000",
+                "1024 Durian Rd, Melbourne, VIC 3000",
+                new Integer[]{1});
+
+        Assertions.assertNotNull(modelAndView.getModel());
+        Assertions.assertTrue(modelAndView.getModel().containsKey("Error"));
+        Assertions.assertEquals(modelAndView.getModel().get("Error"), "Employee has already added!");
     }
 
     @Test
     public void addInvalidEmployeeWithNoName() throws Exception
     {
-        mockMvc.perform(MockMvcRequestBuilders.post("/businessowner/employee/add")
-                .session(this.httpSession)
-                .param("name",  "")
-                .param("email", "durian@whatever.com")
-                .param("phone", "0400000000")
-                .param("address", "1024 Durian Rd, Melbourne, VIC 3000")
-                .param("service", "1"))
-                .andExpect(content().string(containsString("Name must only contain letters and spaces")));
+        EmployeeController employeeController = new EmployeeController(this.httpSession);
+        ModelAndView modelAndView = employeeController.postEmployeeAdd(
+                "",
+                UUID.randomUUID().toString().substring(0, 8) + "@whatever.com",
+                "0400000000",
+                "1024 Durian Rd, Melbourne, VIC 3000",
+                new Integer[]{1});
+
+        Assertions.assertNotNull(modelAndView.getModel());
+        Assertions.assertTrue(modelAndView.getModel().containsKey("Error"));
+        Assertions.assertEquals(modelAndView.getModel().get("Error"),
+                "Name must only contain letters and spaces");
     }
 
     @Test
     public void addInvalidChinesePhoneNumber() throws Exception
     {
-        mockMvc.perform(MockMvcRequestBuilders.post("/businessowner/employee/add")
-                .session(this.httpSession)
-                .param("name",  "WowDurian")
-                .param("email", UUID.randomUUID().toString().substring(0, 8) + "@whatever.com")
-                .param("phone", "+8613800138000")
-                .param("address", "1024 Durian Rd, Melbourne, VIC 3000")
-                .param("service", "1"))
-                .andExpect(content().string(containsString("Phone must be in the correct format.")));
+        EmployeeController employeeController = new EmployeeController(this.httpSession);
+        ModelAndView modelAndView = employeeController.postEmployeeAdd(
+                "CommieDurian",
+                UUID.randomUUID().toString().substring(0, 8) + "@whatever.com",
+                "+8613800138000",
+                "1024 Durian Rd, Melbourne, VIC 3000",
+                new Integer[]{1});
+
+        Assertions.assertNotNull(modelAndView.getModel());
+        Assertions.assertTrue(modelAndView.getModel().containsKey("Error"));
+        Assertions.assertEquals(modelAndView.getModel().get("Error"),
+                "Phone must be in the correct format.");
     }
 }
