@@ -110,7 +110,8 @@ public class LoginController {
         }
         User user = null;
         if(role == Role.Customer){
-            user = obs.getCustomerById((Integer)session.getAttribute("id"));
+            Integer id = (Integer)session.getAttribute("id");
+            user = obs.getCustomerById(id);
         }
         else if(role == Role.BusinessOwner){
             user = obs.getBusinessOwnerById((Integer)session.getAttribute("id"));

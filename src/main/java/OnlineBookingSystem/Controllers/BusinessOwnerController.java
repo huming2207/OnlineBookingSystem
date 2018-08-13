@@ -6,15 +6,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpSession;
 import java.text.MessageFormat;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.logging.Logger;
 
 @Controller
@@ -45,11 +47,29 @@ public class BusinessOwnerController {
 
         //If the user is authenticated, then create new service object and save to the database
         // Duration must be longer than 0 minute
-        ModelAndView modelAndView = new ModelAndView("redirect:/businessowner/service");
+        // TODO: ugly fix, need to clean it
         if(duration <= 0) {
+            ModelAndView modelAndView = new ModelAndView("service");
+            ArrayList<BusinessService> services = obs.getServices(user.getId());
+            modelAndView.addObject("services", services);
+            BusinessOwner b = BusinessOwner.getById(Integer.parseInt(session.getAttribute("id").toString()));
+            modelAndView.addObject("owner", b);
+
+            modelAndView.addObject("Error", "Duration should be longer than 0 minute!");
+            modelAndView.setStatus(HttpStatus.BAD_REQUEST);
+            return modelAndView;
+        } else if(serviceName.isEmpty()) {
+            ModelAndView modelAndView = new ModelAndView("service");
+            ArrayList<BusinessService> services = obs.getServices(user.getId());
+            modelAndView.addObject("services", services);
+            BusinessOwner b = BusinessOwner.getById(Integer.parseInt(session.getAttribute("id").toString()));
+            modelAndView.addObject("owner", b);
+
+            modelAndView.addObject("Error", "Service name cannot be empty!");
             modelAndView.setStatus(HttpStatus.BAD_REQUEST);
             return modelAndView;
         } else {
+            ModelAndView modelAndView = new ModelAndView("redirect:/businessowner/service");
             BusinessService newService = new BusinessService(user.getId(), serviceName, 1, duration);
             BusinessService.saveService(newService);
             return modelAndView;
@@ -118,7 +138,7 @@ public class BusinessOwnerController {
      * @param serviceId id of the service to be deleted
      * @return The service page for successful deletions
      */
-    @RequestMapping(path = "service/cancel/{serviceId}")
+    @RequestMapping(path = "/service/cancel/{serviceId}")
     public ModelAndView cancelService(
             @PathVariable(name="serviceId") int serviceId,
             RedirectAttributes redirectAttrs){

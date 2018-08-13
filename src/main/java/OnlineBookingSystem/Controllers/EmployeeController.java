@@ -15,7 +15,6 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpSession;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 
@@ -153,7 +152,12 @@ public class EmployeeController {
             session.invalidate();
             return new ModelAndView("redirect:/");
         }
+
         ModelAndView mav = new ModelAndView("employeeadd");
+        ArrayList<BusinessService> services = obs.getServices(user.getId());
+        mav.addObject("services", services);
+        BusinessOwner b = BusinessOwner.getById(Integer.parseInt(session.getAttribute("id").toString()));
+        mav.addObject("owner", b);
 
         //Check that name is alpha beta and space only
         if(!name.matches("^[a-zA-Z ]+$")){
