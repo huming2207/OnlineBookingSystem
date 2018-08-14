@@ -4,6 +4,8 @@ import OnlineBookingSystem.Controllers.EmployeeController;
 import OnlineBookingSystem.ModelClasses.OBSFascade;
 import OnlineBookingSystem.ModelClasses.OBSModel;
 import OnlineBookingSystem.ModelClasses.Role;
+import com.inflectra.spiratest.addons.junitextension.SpiraTestCase;
+import com.inflectra.spiratest.addons.junitextension.SpiraTestConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,14 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpSession;
 import java.util.UUID;
+
+@SpiraTestConfiguration(
+        //following are REQUIRED
+        url = "https://rmit-university.spiraservice.net",
+        login = "s3554025",
+        rssToken = "{A80D40D0-9F2F-4D2C-9A3A-81B9E6262877}",
+        projectId = 222
+)
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -40,6 +50,7 @@ public class EmployeeControllerTest
     }
 
     @Test
+    @SpiraTestCase(testCaseId = 2276)
     public void addNewEmployee() throws Exception
     {
         EmployeeController employeeController = new EmployeeController(this.httpSession);
@@ -54,6 +65,7 @@ public class EmployeeControllerTest
     }
 
     @Test
+    @SpiraTestCase(testCaseId = 2277)
     public void addInvalidEmployeeWithDuplicatedName() throws Exception
     {
         String employeeName = "DuplicatedFireAlarm";
@@ -81,6 +93,7 @@ public class EmployeeControllerTest
     }
 
     @Test
+    @SpiraTestCase(testCaseId = 2278)
     public void addInvalidEmployeeWithNoName() throws Exception
     {
         EmployeeController employeeController = new EmployeeController(this.httpSession);
@@ -98,6 +111,7 @@ public class EmployeeControllerTest
     }
 
     @Test
+    @SpiraTestCase(testCaseId = 2279)
     public void addInvalidChinesePhoneNumber() throws Exception
     {
         EmployeeController employeeController = new EmployeeController(this.httpSession);

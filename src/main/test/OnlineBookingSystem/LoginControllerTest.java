@@ -23,7 +23,7 @@ import javax.servlet.http.HttpSession;
         //following are REQUIRED
         url = "https://rmit-university.spiraservice.net",
         login = "s3554025",
-        rssToken = "{884CCF22-E045-4D61-AE3A-7414D20BAB8B}",
+        rssToken = "{A80D40D0-9F2F-4D2C-9A3A-81B9E6262877}",
         projectId = 222
 )
 

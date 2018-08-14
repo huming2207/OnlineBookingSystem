@@ -4,6 +4,8 @@ import OnlineBookingSystem.Controllers.BookingController;
 import OnlineBookingSystem.ModelClasses.OBSFascade;
 import OnlineBookingSystem.ModelClasses.OBSModel;
 import OnlineBookingSystem.ModelClasses.Role;
+import com.inflectra.spiratest.addons.junitextension.SpiraTestCase;
+import com.inflectra.spiratest.addons.junitextension.SpiraTestConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,14 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
+
+@SpiraTestConfiguration(
+        //following are REQUIRED
+        url = "https://rmit-university.spiraservice.net",
+        login = "s3554025",
+        rssToken = "{A80D40D0-9F2F-4D2C-9A3A-81B9E6262877}",
+        projectId = 222
+)
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
@@ -42,6 +52,7 @@ public class BookingControllerTest
     }
 
     @Test
+    @SpiraTestCase(testCaseId = 2268)
     public void addBooking()
     {
         BookingController bookingController = new BookingController(this.httpSession);
@@ -62,6 +73,7 @@ public class BookingControllerTest
     }
 
     @Test
+    @SpiraTestCase(testCaseId = 2269)
     public void addPastInvalidBooking() throws Exception
     {
         BookingController bookingController = new BookingController(this.httpSession);
@@ -81,6 +93,7 @@ public class BookingControllerTest
     }
 
     @Test
+    @SpiraTestCase(testCaseId = 2270)
     public void addWrongFormattedBooking() throws Exception
     {
         BookingController bookingController = new BookingController(this.httpSession);
@@ -99,6 +112,7 @@ public class BookingControllerTest
     }
 
     @Test
+    @SpiraTestCase(testCaseId = 2271)
     public void addClosedInvalidBooking() throws Exception
     {
         BookingController bookingController = new BookingController(this.httpSession);
